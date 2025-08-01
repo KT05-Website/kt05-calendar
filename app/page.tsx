@@ -1,103 +1,163 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { setHours, setMinutes } from "date-fns";
+
+export default function BookingForm() {
+  const [loading, setLoading] = useState(false);
+  const [startTime, setStartTime] = useState<Date | null>(null);
+  const [confirmed, setConfirmed] = useState(false); // Confirmation state
+
+  // Dummy name/email (from Framer contact details)
+  const name = "Murtaza Abbasali";
+  const email = "kt05.orders@gmail.com";
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!startTime) {
+      alert("Please select a time.");
+      return;
+    }
+
+    setLoading(true);
+
+    const endTime = new Date(startTime);
+    endTime.setHours(startTime.getHours() + 1); // Always 1-hour slot
+
+    const formData = {
+      name,
+      email,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+    };
+
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setConfirmed(true);
+      } else {
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      alert("Error booking slot.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // If confirmed, show confirmation page
+  if (confirmed && startTime) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          color: "white",
+          textAlign: "center",
+        }}
+      >
+        <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>
+          Booking Confirmed!
+        </h1>
+        <p>
+          You booked:{" "}
+          <strong>
+            {startTime.toLocaleDateString()} at{" "}
+            {startTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+            {" "}–{" "}
+            {new Date(startTime.getTime() + 60 * 60 * 1000).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </strong>
+        </p>
+
+        <button
+          onClick={() =>
+            (window.location.href = "https://buy.stripe.com/test_123456") // Dummy Stripe link
+          }
+          style={{
+            marginTop: "2rem",
+            padding: "10px 20px",
+            backgroundColor: "#635BFF",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+          }}
+        >
+          Proceed to Payment
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <form
+      onSubmit={handleSubmit}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        color: "white",
+      }}
+    >
+      <p style={{ fontSize: "32px", textAlign: "center", marginBottom: "1rem", whiteSpace: "pre-line" }}>
+        Select a Time (1 hour slot){"\n"}for your booking consultation:
+      </p>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      <div
+        style={{
+          border: "2px solid blue", // Always visible border
+          borderRadius: "4px",
+          padding: "0.5rem",
+          marginBottom: "1rem",
+        }}
+      >
+        <DatePicker
+          selected={startTime}
+          onChange={(date) => setStartTime(date)}
+          showTimeSelect
+          dateFormat="Pp"
+          filterDate={(date) => date.getDay() !== 0} // Disable Sundays
+          minTime={setHours(setMinutes(new Date(), 0), 9)} // 9:00 AM
+          maxTime={setHours(setMinutes(new Date(), 0), 20)} // 8:00 PM
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        style={{
+          border: "2px solid white",
+          padding: "10px 20px",
+          backgroundColor: "transparent",
+          color: "white",
+          fontSize: "1.2rem",
+          cursor: "pointer",
+        }}
+      >
+        {loading ? "Booking..." : "Book Now"}
+      </button>
+    </form>
   );
 }
