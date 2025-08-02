@@ -1,28 +1,44 @@
-import type { NextApiRequest, NextApiResponse } from "next"
+import type { NextApiRequest, NextApiResponse } from "next";
 
-// Simple in-memory cache
-let orderCache: Record<string, any> = {}
+// In-memory order cache (not persistent, good for testing only)
+const orderCache: Record<string, unknown> = {};
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method === "POST") {
-        try {
-            const orderId = Date.now().toString() // simple unique ID
-            orderCache[orderId] = req.body
+  if (req.method === "POST") {
+    try {
+      // Generate unique order ID
+      const orderId = Date.now().toString();
 
-            return res.status(200).json({ success: true, orderId })
-        } catch {
-            return res.status(500).json({ success: false, error: "Failed to save order" })
-        }
+      // Save order data
+      orderCache[orderId] = req.body;
+
+      return res.status(200).json({
+        success: true,
+        orderId,
+      });
+    } catch (err) {
+      console.error("Error saving order:", err);
+      return res.status(500).json({
+        success: false,
+        error: "Failed to save order",
+      });
     }
+  }
 
-    if (req.method === "GET") {
-        const { orderId } = req.query
-        if (orderId && orderCache[orderId as string]) {
-            return res.status(200).json(orderCache[orderId as string])
-        } else {
-            return res.status(404).json({ error: "Order not found" })
-        }
+  if (req.method === "GET") {
+    const { orderId } = req.query;
+
+    if (orderId && orderCache[orderId as string]) {
+      return res.status(200).json(orderCache[orderId as string]);
+    } else {
+      return res.status(404).json({
+        error: "Order not found",
+      });
     }
+  }
 
-    return res.status(405).json({ error: "Method not allowed" })
+  // If method is neither POST nor GET
+  return res.status(405).json({
+    error: "Method not allowed",
+  });
 }
