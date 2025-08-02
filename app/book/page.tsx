@@ -1,12 +1,12 @@
 "use client"
 
 import React, { useState } from "react"
-import SneakerSelection from "./SneakerSelection.tsx"
-import PackageSelection from "./PackageSelection.tsx"
-import ShoeOptions from "./ShoeOptions.tsx"
-import WordCountBox from "./WordCountBox.tsx"
-import ImageAttachment from "./ImageAttachment.tsx"
-import ContactDetails from "./ContactDetails.tsx"
+import SneakerSelection from "./SneakerSelection"
+import PackageSelection from "./PackageSelection"
+import ShoeOptions from "./ShoeOptions"
+import WordCountBox from "./WordCountBox"
+import ImageAttachment from "./ImageAttachment"
+import ContactDetails from "./ContactDetails"
 
 export default function DesignYourOwnPage() {
     const [sneaker, setSneaker] = useState("")
@@ -22,10 +22,11 @@ export default function DesignYourOwnPage() {
     const [laceColor, setLaceColor] = useState("")
     const [isContactValid, setIsContactValid] = useState(false)
 
-    // FINAL redirect button logic
+    // Redirect to calendar page
     const handleRedirect = () => {
-        // Direct redirect to calendar page — skip API for now
-        window.location.assign("https://friendly-cuchufli-ad7d31.netlify.app/calendar")
+        window.location.assign(
+            "https://friendly-cuchufli-ad7d31.netlify.app/calendar"
+        )
     }
 
     return (
@@ -44,10 +45,7 @@ export default function DesignYourOwnPage() {
 
             {/* Package + Shoe Options */}
             <section style={{ marginBottom: "50px" }}>
-                <PackageSelection
-                    value={packageOption}
-                    onChange={setPackageOption}
-                />
+                <PackageSelection value={packageOption} onChange={setPackageOption} />
                 <ShoeOptions
                     size={shoeSize}
                     onSizeChange={setShoeSize}
@@ -76,7 +74,6 @@ export default function DesignYourOwnPage() {
                 >
                     4. Tell Us Your Contact Details
                 </h2>
-
                 <ContactDetails
                     value={contact}
                     onChange={setContact}
@@ -100,12 +97,8 @@ export default function DesignYourOwnPage() {
                     margin: "0 auto",
                     transition: "transform 0.2s ease-in-out",
                 }}
-                onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = "scale(0.97)")
-                }
-                onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = "scale(1)")
-                }
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(0.97)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
             >
                 Book Consultation
             </button>
