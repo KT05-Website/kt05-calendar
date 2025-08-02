@@ -1,116 +1,114 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+"use client"
 
-"use client";
+import React, { useState } from "react"
+import SneakerSelection from "./SneakerSelection.tsx"
+import PackageSelection from "./PackageSelection.tsx"
+import ShoeOptions from "./ShoeOptions.tsx"
+import WordCountBox from "./WordCountBox.tsx"
+import ImageAttachment from "./ImageAttachment.tsx"
+import ContactDetails from "./ContactDetails.tsx"
 
-import { useState } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+export default function DesignYourOwnPage() {
+    const [sneaker, setSneaker] = useState("")
+    const [packageOption, setPackageOption] = useState("")
+    const [description, setDescription] = useState("")
+    const [images, setImages] = useState<File[]>([])
+    const [contact, setContact] = useState({
+        name: "",
+        email: "",
+        phone: "",
+    })
+    const [shoeSize, setShoeSize] = useState("")
+    const [laceColor, setLaceColor] = useState("")
+    const [isContactValid, setIsContactValid] = useState(false)
 
-export default function BookingForm() {
-  const [loading, setLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [endTime, setEndTime] = useState<Date | null>(null);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!name || !email || !startTime || !endTime) {
-      alert("Please fill in all fields.");
-      return;
+    // FINAL redirect button logic
+    const handleRedirect = () => {
+        // Direct redirect to calendar page — skip API for now
+        window.location.assign("https://friendly-cuchufli-ad7d31.netlify.app/calendar")
     }
 
-    setLoading(true);
+    return (
+        <div
+            style={{
+                fontFamily: "Inter, sans-serif",
+                padding: "20px",
+                maxWidth: "1200px",
+                margin: "0 auto",
+            }}
+        >
+            {/* Sneaker Selection */}
+            <section style={{ marginBottom: "50px" }}>
+                <SneakerSelection value={sneaker} onChange={setSneaker} />
+            </section>
 
-    const formData = {
-      name,
-      email,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-    };
+            {/* Package + Shoe Options */}
+            <section style={{ marginBottom: "50px" }}>
+                <PackageSelection
+                    value={packageOption}
+                    onChange={setPackageOption}
+                />
+                <ShoeOptions
+                    size={shoeSize}
+                    onSizeChange={setShoeSize}
+                    laceColor={laceColor}
+                    onLaceColorChange={setLaceColor}
+                />
+            </section>
 
-    try {
-      const res = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+            {/* Description + Image Upload */}
+            <section style={{ marginBottom: "50px" }}>
+                <WordCountBox value={description} onChange={setDescription} />
+                <div style={{ marginTop: "20px" }}>
+                    <ImageAttachment value={images} onChange={setImages} />
+                </div>
+            </section>
 
-      const data = await res.json();
+            {/* Contact Details */}
+            <section style={{ marginBottom: "50px" }}>
+                <h2
+                    style={{
+                        fontSize: "40px",
+                        fontWeight: "bold",
+                        marginBottom: "20px",
+                        textAlign: "left",
+                    }}
+                >
+                    4. Tell Us Your Contact Details
+                </h2>
 
-      if (data.success) {
-        alert(`Booking created! View it here: ${data.eventLink}`);
-        setName("");
-        setEmail("");
-        setStartTime(null);
-        setEndTime(null);
-      } else {
-        alert(`Error: ${data.error}`);
-      }
-    } catch (_error) {
-      alert("An unexpected error occurred. Check console.");
-      console.error(_error);
-    } finally {
-      setLoading(false);
-    }
-  }
+                <ContactDetails
+                    value={contact}
+                    onChange={setContact}
+                    onValidityChange={setIsContactValid}
+                />
+            </section>
 
-  return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 400 }}
-    >
-      <input
-        name="name"
-        placeholder="Your Name"
-        required
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-
-      <input
-        name="email"
-        placeholder="Your Email"
-        type="email"
-        required
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <label>Start Time:</label>
-      <DatePicker
-        selected={startTime}
-        onChange={(date) => setStartTime(date)}
-        showTimeSelect
-        dateFormat="Pp"
-        placeholderText="Select start time"
-      />
-
-      <label>End Time:</label>
-      <DatePicker
-        selected={endTime}
-        onChange={(date) => setEndTime(date)}
-        showTimeSelect
-        dateFormat="Pp"
-        placeholderText="Select end time"
-      />
-
-      <button
-        type="submit"
-        disabled={loading}
-        style={{
-          backgroundColor: loading ? "#6666" : "#000",
-          color: "#fff",
-          padding: "10px 15px",
-          border: "none",
-          borderRadius: "6px",
-          cursor: loading ? "not-allowed" : "pointer",
-        }}
-      >
-        {loading ? "Booking..." : "Book Now"}
-      </button>
-    </form>
-  );
+            {/* Book Consultation Button */}
+            <button
+                onClick={handleRedirect}
+                disabled={!isContactValid}
+                style={{
+                    backgroundColor: isContactValid ? "#000" : "#666",
+                    color: "#fff",
+                    border: "none",
+                    padding: "15px 25px",
+                    fontSize: "18px",
+                    borderRadius: "8px",
+                    cursor: isContactValid ? "pointer" : "not-allowed",
+                    display: "block",
+                    margin: "0 auto",
+                    transition: "transform 0.2s ease-in-out",
+                }}
+                onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(0.97)")
+                }
+                onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                }
+            >
+                Book Consultation
+            </button>
+        </div>
+    )
 }

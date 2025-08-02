@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
+
+import { NextRequest, NextResponse } from "next/server";
 import { createCalendarEvent } from "@/lib/googleCalendar";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { name, email, startTime, endTime } = await req.json();
 
@@ -25,10 +29,10 @@ export async function POST(req: Request) {
       success: true,
       eventLink: event.htmlLink,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating calendar event:", error);
     return NextResponse.json(
-      { success: false, error: "Internal Server Error" },
+      { success: false, error: error.message || "Internal Server Error" },
       { status: 500 }
     );
   }
