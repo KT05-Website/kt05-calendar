@@ -1,35 +1,36 @@
+// app/api/order.ts
+
 import { NextResponse } from "next/server";
 
-// Use const instead of let for variables never reassigned
-const orderCache: Record<string, string> = {};
-
-// Define a clear type instead of `any`
-interface OrderRequestBody {
-  productId: string;
+interface Order {
+  id: string;
+  item: string;
   quantity: number;
 }
 
+const orderCache: Order[] = []; // use const instead of let
+
 export async function POST(req: Request) {
   try {
-    const body: OrderRequestBody = await req.json();
+    const body = await req.json();
+    const { id, item, quantity } = body as Order; // properly type the body
 
-    // Validate input
-    if (!body.productId || body.quantity <= 0) {
+    if (!id || !item || !quantity) {
       return NextResponse.json(
-        { success: false, error: "Invalid product ID or quantity" },
+        { success: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Simulate order creation
-    const orderId = `order-${Date.now()}`;
-    orderCache[orderId] = body.productId;
+    // Save order in cache
+    orderCache.push({ id, item, quantity });
 
-    return NextResponse.json({ success: true, orderId });
-  } catch (_error) {
-    console.error("Order API Error:", _error);
+    return NextResponse.json({ success: true, orders: orderCache });
+  } catch (err) {
+    // Use error variable properly
+    console.error("Error processing order:", err);
     return NextResponse.json(
-      { success: false, error: "Internal Server Error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
