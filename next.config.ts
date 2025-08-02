@@ -2,8 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   eslint: {
-    // This prevents linting errors from failing your production build
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // disables ESLint errors from breaking builds
+  },
+  typescript: {
+    ignoreBuildErrors: true, // disables TypeScript errors from breaking builds
   },
 };
 

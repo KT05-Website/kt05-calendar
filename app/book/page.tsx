@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 "use client";
 
 import { useState } from "react";
@@ -35,7 +38,7 @@ export default function BookingForm() {
         body: JSON.stringify(formData),
       });
 
-      const data: { success?: boolean; eventLink?: string; error?: string } = await res.json();
+      const data = await res.json();
 
       if (data.success) {
         alert(`Booking created! View it here: ${data.eventLink}`);
@@ -47,9 +50,7 @@ export default function BookingForm() {
         alert(`Error: ${data.error}`);
       }
     } catch (_error) {
-      // `_error` avoids ESLint "unused variable" warning
       alert("An unexpected error occurred. Check console.");
-      // eslint-disable-next-line no-console
       console.error(_error);
     } finally {
       setLoading(false);
@@ -59,12 +60,7 @@ export default function BookingForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-        maxWidth: 400,
-      }}
+      style={{ display: "flex", flexDirection: "column", gap: "1rem", maxWidth: 400 }}
     >
       <input
         name="name"

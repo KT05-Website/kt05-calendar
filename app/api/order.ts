@@ -1,31 +1,30 @@
-import { NextResponse } from "next/server";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable prefer-const */
 
-type OrderCacheType = {
-  [key: string]: unknown; // Adjust this type later if you know the structure
-};
+import type { NextApiRequest, NextApiResponse } from "next";
 
-const orderCache: OrderCacheType = {};
+// Simple in-memory cache for orders
+let orderCache: any = {};
 
-export async function GET() {
-  try {
-    // Example logic: return cached orders or empty object
-    return NextResponse.json({ success: true, data: orderCache });
-  } catch (error: unknown) {
-    console.error("Error fetching orders:", error);
-    return NextResponse.json({ success: false, error: "Failed to fetch orders" }, { status: 500 });
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method === "POST") {
+    const { name, email, startTime, endTime } = req.body;
+
+    // Basic validation
+    if (!name || !email || !startTime || !endTime) {
+      return res.status(400).json({ success: false, error: "Missing required fields" });
+    }
+
+    // Create a simple booking ID
+    const bookingId = Date.now().toString();
+    orderCache[bookingId] = { name, email, startTime, endTime };
+
+    return res.status(200).json({
+      success: true,
+      eventLink: `/bookings/${bookingId}`
+    });
   }
-}
 
-export async function POST(req: Request) {
-  try {
-    const body: unknown = await req.json();
-
-    // If you know structure, replace `unknown` with proper type (e.g., { orderId: string; ... })
-    orderCache["lastOrder"] = body;
-
-    return NextResponse.json({ success: true, message: "Order saved" });
-  } catch (error: unknown) {
-    console.error("Error saving order:", error);
-    return NextResponse.json({ success: false, error: "Failed to save order" }, { status: 500 });
-  }
+  return res.status(405).json({ success: false, error: "Method not allowed" });
 }

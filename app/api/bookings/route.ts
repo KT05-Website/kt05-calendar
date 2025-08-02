@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
-import path from "path";
-import { readFileSync } from "fs";
 
 export async function POST(req: Request) {
   try {
@@ -9,7 +7,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { name, email, startTime, endTime } = body;
 
-    // Validate input
+    // Validate required fields
     if (!name || !email || !startTime || !endTime) {
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
@@ -17,9 +15,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // Load service account key
-    const keyPath = path.join(process.cwd(), "credentials/service-account-key.json");
-    const keyFile = JSON.parse(readFileSync(keyPath, "utf8"));
+    // Parse service account credentials from environment variable
+    if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+      return NextResponse.json(
+        { success: false, error: "Google service account not configured" },
+        { status: 500 }
+      );
+    }
+
+    const keyFile = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
 
     // Authenticate with Google
     const auth = new google.auth.GoogleAuth({
@@ -29,45 +33,27 @@ export async function POST(req: Request) {
 
     const calendar = google.calendar({ version: "v3", auth });
 
-    // Calendar ID (from your Google Calendar)
-    const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID;
-
-    if (!CALENDAR_ID) {
-      return NextResponse.json(
-        { success: false, error: "Missing GOOGLE_CALENDAR_ID in environment variables" },
-        { status: 500 }
-      );
-    }
-
-    // Create event object
+    // Create calendar event
     const event = {
       summary: `Booking: ${name}`,
-      description: `Booked by ${name} (${email})`,
-      start: {
-        dateTime: startTime,
-        timeZone: "Europe/London",
-      },
-      end: {
-        dateTime: endTime,
-        timeZone: "Europe/London",
-      },
+      description: `Email: ${email}`,
+      start: { dateTime: startTime, timeZone: "Europe/London" },
+      end: { dateTime: endTime, timeZone: "Europe/London" },
     };
 
-    // Insert event into Google Calendar
     const response = await calendar.events.insert({
-      calendarId: CALENDAR_ID,
+      calendarId: "primary",
       requestBody: event,
     });
 
-    // Respond with event link
     return NextResponse.json({
       success: true,
       eventLink: response.data.htmlLink,
     });
-  } catch (error) {
-    console.error("Error creating event:", error);
+  } catch (err) {
+    console.error("Error creating booking:", err);
     return NextResponse.json(
-      { success: false, error: "Failed to create event" },
+      { success: false, error: "Failed to create booking" },
       { status: 500 }
     );
   }
