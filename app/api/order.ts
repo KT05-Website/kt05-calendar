@@ -1,37 +1,31 @@
-// app/api/order.ts
-
 import { NextResponse } from "next/server";
 
-interface Order {
-  id: string;
-  item: string;
-  quantity: number;
-}
+type OrderCacheType = {
+  [key: string]: unknown; // Adjust this type later if you know the structure
+};
 
-const orderCache: Order[] = []; // use const instead of let
+const orderCache: OrderCacheType = {};
+
+export async function GET() {
+  try {
+    // Example logic: return cached orders or empty object
+    return NextResponse.json({ success: true, data: orderCache });
+  } catch (error: unknown) {
+    console.error("Error fetching orders:", error);
+    return NextResponse.json({ success: false, error: "Failed to fetch orders" }, { status: 500 });
+  }
+}
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { id, item, quantity } = body as Order; // properly type the body
+    const body: unknown = await req.json();
 
-    if (!id || !item || !quantity) {
-      return NextResponse.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+    // If you know structure, replace `unknown` with proper type (e.g., { orderId: string; ... })
+    orderCache["lastOrder"] = body;
 
-    // Save order in cache
-    orderCache.push({ id, item, quantity });
-
-    return NextResponse.json({ success: true, orders: orderCache });
-  } catch (err) {
-    // Use error variable properly
-    console.error("Error processing order:", err);
-    return NextResponse.json(
-      { success: false, error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, message: "Order saved" });
+  } catch (error: unknown) {
+    console.error("Error saving order:", error);
+    return NextResponse.json({ success: false, error: "Failed to save order" }, { status: 500 });
   }
 }
