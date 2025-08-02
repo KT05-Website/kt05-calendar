@@ -8,6 +8,15 @@ import type { NextApiRequest, NextApiResponse } from "next";
 let orderCache: any = {};
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Debug endpoint to check if environment variables are set
+  if (req.method === "GET") {
+    return res.status(200).json({
+      GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID ? "Set ✅" : "Not Found ❌",
+      GOOGLE_SERVICE_ACCOUNT: process.env.GOOGLE_SERVICE_ACCOUNT ? "Set ✅" : "Not Found ❌",
+    });
+  }
+
+  // Handle booking creation
   if (req.method === "POST") {
     const { name, email, startTime, endTime } = req.body;
 
