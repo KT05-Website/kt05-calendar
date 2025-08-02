@@ -1,44 +1,36 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
 
-// In-memory order cache (not persistent, good for testing only)
-const orderCache: Record<string, unknown> = {};
+// Use const instead of let for variables never reassigned
+const orderCache: Record<string, string> = {};
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === "POST") {
-    try {
-      // Generate unique order ID
-      const orderId = Date.now().toString();
+// Define a clear type instead of `any`
+interface OrderRequestBody {
+  productId: string;
+  quantity: number;
+}
 
-      // Save order data
-      orderCache[orderId] = req.body;
+export async function POST(req: Request) {
+  try {
+    const body: OrderRequestBody = await req.json();
 
-      return res.status(200).json({
-        success: true,
-        orderId,
-      });
-    } catch (err) {
-      console.error("Error saving order:", err);
-      return res.status(500).json({
-        success: false,
-        error: "Failed to save order",
-      });
+    // Validate input
+    if (!body.productId || body.quantity <= 0) {
+      return NextResponse.json(
+        { success: false, error: "Invalid product ID or quantity" },
+        { status: 400 }
+      );
     }
+
+    // Simulate order creation
+    const orderId = `order-${Date.now()}`;
+    orderCache[orderId] = body.productId;
+
+    return NextResponse.json({ success: true, orderId });
+  } catch (_error) {
+    console.error("Order API Error:", _error);
+    return NextResponse.json(
+      { success: false, error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
-
-  if (req.method === "GET") {
-    const { orderId } = req.query;
-
-    if (orderId && orderCache[orderId as string]) {
-      return res.status(200).json(orderCache[orderId as string]);
-    } else {
-      return res.status(404).json({
-        error: "Order not found",
-      });
-    }
-  }
-
-  // If method is neither POST nor GET
-  return res.status(405).json({
-    error: "Method not allowed",
-  });
 }

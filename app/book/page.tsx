@@ -46,9 +46,9 @@ export default function BookingForm() {
       } else {
         alert(`Error: ${data.error}`);
       }
-    } catch (error) {
+    } catch (_error) {
       alert("An unexpected error occurred. Check console.");
-      console.error(error);
+      console.error(_error);
     } finally {
       setLoading(false);
     }
@@ -82,6 +82,7 @@ export default function BookingForm() {
         onChange={(date) => setStartTime(date)}
         showTimeSelect
         dateFormat="Pp"
+        placeholderText="Select start time"
       />
 
       <label>End Time:</label>
@@ -90,9 +91,21 @@ export default function BookingForm() {
         onChange={(date) => setEndTime(date)}
         showTimeSelect
         dateFormat="Pp"
+        placeholderText="Select end time"
       />
 
-      <button type="submit" disabled={loading}>
+      <button
+        type="submit"
+        disabled={loading}
+        style={{
+          backgroundColor: loading ? "#6666" : "#000",
+          color: "#fff",
+          padding: "10px 15px",
+          border: "none",
+          borderRadius: "6px",
+          cursor: loading ? "not-allowed" : "pointer",
+        }}
+      >
         {loading ? "Booking..." : "Book Now"}
       </button>
     </form>
