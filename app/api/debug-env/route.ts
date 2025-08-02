@@ -1,10 +1,9 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.status(200).json({
+export async function GET(req: NextRequest) {
+  return NextResponse.json({
     serviceAccountExists: !!process.env.GOOGLE_SERVICE_ACCOUNT,
-    calendarId: process.env.GOOGLE_CALENDAR_ID || null,
-    // Uncomment below if you want to see the first part of the service account (for sanity check)
-    // serviceAccountPreview: process.env.GOOGLE_SERVICE_ACCOUNT?.substring(0, 50)
+    // This is hardcoded now, so always visible:
+    calendarId: "kt05.orders@gmail.com",
   });
 }
