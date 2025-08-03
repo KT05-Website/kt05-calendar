@@ -1,12 +1,12 @@
 "use client"
 
 import React, { useState } from "react"
-import SneakerSelection from "./SneakerSelection"
-import PackageSelection from "./PackageSelection"
-import ShoeOptions from "./ShoeOptions"
-import WordCountBox from "./WordCountBox"
-import ImageAttachment from "./ImageAttachment"
-import ContactDetails from "./ContactDetails"
+import SneakerSelection from "./sneakerselection"
+import PackageSelection from "./packageselection"
+import ShoeOptions from "./shoeoptions"
+import WordCountBox from "./wordcountbox"
+import ImageAttachment from "./imageattachment"
+import ContactDetails from "./contactdetails"
 
 export default function DesignYourOwnPage() {
     const [sneaker, setSneaker] = useState("")
