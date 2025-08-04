@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 
 export async function POST(req: Request) {
   try {
-    // 1. Get raw body and signature
+    // Stripe signature verification
     const rawBody = await req.text()
     const sig = req.headers.get("stripe-signature") as string
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string
@@ -22,33 +22,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 })
     }
 
-    // 2. Handle checkout.session.completed event
+    // Handle checkout.session.completed
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session
 
-      // Parse metadata (we store JSON strings for structured data)
-      let metadata: any = {}
-      try {
-        metadata = session.metadata ? JSON.parse(session.metadata.details || "{}") : {}
-      } catch (err) {
-        console.error("Failed to parse metadata:", err)
-      }
+      const m = session.metadata || {}
 
       const emailData = {
-        sneaker: metadata.sneaker || "Not provided",
-        packageOption: metadata.packageOption || "Not provided",
-        shoeSize: metadata.shoeSize || "Not provided",
-        laceColor: metadata.laceColor || "Not provided",
-        description: metadata.description || "No description provided",
-        images: metadata.images || "No images attached",
+        sneaker: m.sneaker || "Not provided",
+        packageOption: m.packageOption || "Not provided",
+        shoeSize: m.shoeSize || "Not provided",
+        laceColor: m.laceColor || "Not provided",
+        description: m.description || "No description provided",
+        images: m.images || "No images attached",
         contact: {
-          name: metadata.contact?.name || "Unknown",
-          email: metadata.contact?.email || "Unknown",
-          phone: metadata.contact?.phone || "Unknown",
+          name: m.contact_name || "Unknown",
+          email: m.contact_email || "Unknown",
+          phone: m.contact_phone || "Unknown",
         },
       }
 
-      // 3. Send notification email
       await sendEmail(emailData)
     }
 

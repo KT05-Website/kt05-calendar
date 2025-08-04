@@ -1,12 +1,14 @@
-import { NextResponse } from "next/server"
-import Stripe from "stripe"
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
 
+// Initialize Stripe client
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-07-30.basil",
-})
+});
 
 export async function POST(req: Request) {
   try {
+    // 1. Parse request body
     const {
       sneaker,
       packageOption,
@@ -15,19 +17,19 @@ export async function POST(req: Request) {
       description,
       images,
       contact,
-    } = await req.json()
+    } = await req.json();
 
-    // Choose correct Stripe Price ID based on package option
-    let priceId = ""
+    // 2. Determine correct Stripe Price ID
+    let priceId = "";
     if (packageOption === "Custom Pro") {
-      priceId = process.env.STRIPE_PRICE_CUSTOM_PRO!
+      priceId = process.env.STRIPE_PRICE_CUSTOM_PRO!;
     } else if (packageOption === "Custom Plus") {
-      priceId = process.env.STRIPE_PRICE_CUSTOM_PLUS!
+      priceId = process.env.STRIPE_PRICE_CUSTOM_PLUS!;
     } else {
-      priceId = process.env.STRIPE_PRICE_CUSTOM!
+      priceId = process.env.STRIPE_PRICE_CUSTOM!;
     }
 
-    // Create Checkout Session with metadata
+    // 3. Create Stripe Checkout Session with clean flat metadata
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -45,19 +47,20 @@ export async function POST(req: Request) {
         shoeSize,
         laceColor,
         description,
-        images: images.join(", "), // store file names in comma-separated string
+        images: images.join(", "), // store as comma-separated string
         contact_name: contact.name,
         contact_email: contact.email,
         contact_phone: contact.phone,
       },
-    })
+    });
 
-    return NextResponse.json({ url: session.url })
-  } catch (err: any) {
-    console.error("Error creating Stripe session:", err)
+    // 4. Return session URL
+    return NextResponse.json({ url: session.url });
+  } catch (error: any) {
+    console.error("Error creating Stripe session:", error);
     return NextResponse.json(
       { error: "Failed to create checkout session" },
       { status: 500 }
-    )
+    );
   }
 }

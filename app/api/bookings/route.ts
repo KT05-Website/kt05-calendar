@@ -2,38 +2,38 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prefer-const */
 
-import { NextRequest, NextResponse } from "next/server";
-import { createCalendarEvent } from "@/lib/googleCalendar";
+import { NextResponse } from "next/server"
 
-export async function POST(req: NextRequest) {
+// Simple in-memory cache (temporary)
+let orderCache: Record<string, any> = {}
+
+// Debug endpoint to verify Google Calendar env variables
+export async function GET() {
+  return NextResponse.json({
+    GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID ? "Set ✅" : "Not Found ❌",
+    GOOGLE_SERVICE_ACCOUNT: process.env.GOOGLE_SERVICE_ACCOUNT ? "Set ✅" : "Not Found ❌",
+  })
+}
+
+// Booking creation handler
+export async function POST(req: Request) {
   try {
-    const { name, email, startTime, endTime } = await req.json();
+    const { name, email, startTime, endTime } = await req.json()
 
-    // Validate fields
+    // Basic validation
     if (!name || !email || !startTime || !endTime) {
-      return NextResponse.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
     }
 
-    // Create event in Google Calendar
-    const event = await createCalendarEvent({
-      summary: `Booking for ${name}`,
-      description: `Email: ${email}`,
-      start: startTime,
-      end: endTime,
-    });
+    // Simple booking ID
+    const bookingId = Date.now().toString()
+    orderCache[bookingId] = { name, email, startTime, endTime }
 
     return NextResponse.json({
       success: true,
-      eventLink: event.htmlLink,
-    });
-  } catch (error: any) {
-    console.error("Error creating calendar event:", error);
-    return NextResponse.json(
-      { success: false, error: error.message || "Internal Server Error" },
-      { status: 500 }
-    );
+      eventLink: `/bookings/${bookingId}`,
+    })
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
   }
 }

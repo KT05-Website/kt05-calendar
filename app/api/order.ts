@@ -2,38 +2,38 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prefer-const */
 
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server"
 
-// Simple in-memory cache for orders
-let orderCache: any = {};
+// Simple in-memory cache (temporary)
+let orderCache: Record<string, any> = {}
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Debug endpoint to check if environment variables are set
-  if (req.method === "GET") {
-    return res.status(200).json({
-      GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID ? "Set ✅" : "Not Found ❌",
-      GOOGLE_SERVICE_ACCOUNT: process.env.GOOGLE_SERVICE_ACCOUNT ? "Set ✅" : "Not Found ❌",
-    });
-  }
+// Debug endpoint to verify env variables
+export async function GET() {
+  return NextResponse.json({
+    GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID ? "Set ✅" : "Not Found ❌",
+    GOOGLE_SERVICE_ACCOUNT: process.env.GOOGLE_SERVICE_ACCOUNT ? "Set ✅" : "Not Found ❌",
+  })
+}
 
-  // Handle booking creation
-  if (req.method === "POST") {
-    const { name, email, startTime, endTime } = req.body;
+// Booking creation handler
+export async function POST(req: Request) {
+  try {
+    const { name, email, startTime, endTime } = await req.json()
 
     // Basic validation
     if (!name || !email || !startTime || !endTime) {
-      return res.status(400).json({ success: false, error: "Missing required fields" });
+      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
     }
 
-    // Create a simple booking ID
-    const bookingId = Date.now().toString();
-    orderCache[bookingId] = { name, email, startTime, endTime };
+    // Simple booking ID
+    const bookingId = Date.now().toString()
+    orderCache[bookingId] = { name, email, startTime, endTime }
 
-    return res.status(200).json({
+    return NextResponse.json({
       success: true,
-      eventLink: `/bookings/${bookingId}`
-    });
+      eventLink: `/bookings/${bookingId}`,
+    })
+  } catch (error) {
+    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
   }
-
-  return res.status(405).json({ success: false, error: "Method not allowed" });
 }
