@@ -1,39 +1,82 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable prefer-const */
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
 
-import { NextResponse } from "next/server"
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: "2025-07-30.basil",
+});
 
-// Simple in-memory cache (temporary)
-let orderCache: Record<string, any> = {}
-
-// Debug endpoint to verify Google Calendar env variables
-export async function GET() {
-  return NextResponse.json({
-    GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID ? "Set ✅" : "Not Found ❌",
-    GOOGLE_SERVICE_ACCOUNT: process.env.GOOGLE_SERVICE_ACCOUNT ? "Set ✅" : "Not Found ❌",
-  })
-}
-
-// Booking creation handler
 export async function POST(req: Request) {
   try {
-    const { name, email, startTime, endTime } = await req.json()
+    // 1. Parse form data coming from Framer
+    const {
+      sneaker,
+      packageOption,
+      shoeSize,
+      laceColor,
+      description,
+      images,
+      contact,
+    } = await req.json();
 
-    // Basic validation
-    if (!name || !email || !startTime || !endTime) {
-      return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
+    // TEMP: Log raw data to check flow
+    console.log("Received booking data:", {
+      sneaker,
+      packageOption,
+      shoeSize,
+      laceColor,
+      description,
+      images,
+      contact,
+    });
+
+    // 2. (Skip Stripe for now in Step 1) — Just confirm we receive data
+    return NextResponse.json(
+      { success: true, message: "Data received successfully" },
+      { status: 200 }
+    );
+
+    // --- Later in Step 2 we will uncomment this Stripe logic ---
+    /*
+    let priceId = "";
+    if (packageOption === "Custom Pro") {
+      priceId = process.env.STRIPE_PRICE_CUSTOM_PRO!;
+    } else if (packageOption === "Custom Plus") {
+      priceId = process.env.STRIPE_PRICE_CUSTOM_PLUS!;
+    } else {
+      priceId = process.env.STRIPE_PRICE_CUSTOM!;
     }
 
-    // Simple booking ID
-    const bookingId = Date.now().toString()
-    orderCache[bookingId] = { name, email, startTime, endTime }
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
+      metadata: {
+        sneaker,
+        packageOption,
+        shoeSize,
+        laceColor,
+        description,
+        images: images?.join(", ") || "",
+        contact_name: contact?.name || "",
+        contact_email: contact?.email || "",
+        contact_phone: contact?.phone || "",
+      },
+    });
 
-    return NextResponse.json({
-      success: true,
-      eventLink: `/bookings/${bookingId}`,
-    })
-  } catch (error) {
-    return NextResponse.json({ success: false, error: "Server error" }, { status: 500 })
+    return NextResponse.json({ url: session.url }, { status: 200 });
+    */
+  } catch (err: any) {
+    console.error("Error handling booking POST:", err);
+    return NextResponse.json(
+      { error: "Failed to handle booking" },
+      { status: 500 }
+    );
   }
 }
