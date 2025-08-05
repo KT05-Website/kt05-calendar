@@ -3,11 +3,19 @@
   publish = ".next"
   functions = "netlify/functions"
 
+# Ensure functions in netlify/functions/ are deployed correctly
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["netlify/functions/**"]
+
+# Redirect API routes to functions (needed for Stripe + others)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
 
-[functions]
-  node_bundler = "esbuild"
-  included_files = ["netlify/functions/**"]
+# Explicit redirect for Stripe webhook (avoids 404)
+[[redirects]]
+  from = "/.netlify/functions/webhook"
+  to = "/.netlify/functions/webhook"
+  status = 200
