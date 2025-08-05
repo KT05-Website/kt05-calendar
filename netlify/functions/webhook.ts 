@@ -1,12 +1,69 @@
 import Stripe from "stripe";
-import { buffer } from "micro";
 import sgMail from "@sendgrid/mail";
+import nodemailer from "nodemailer";
+import { customerConfirmationEmail } from "../../lib/emails/customerConfirmation";
+import { internalOrderNotificationEmail } from "../../lib/emails/internalOrderNotification";
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2025-07-30.basil",
 });
+
+/**
+ * Gmail SMTP fallback via Nodemailer (plain text only)
+ */
+async function sendViaGmailFallback(to: string, subject: string, text: string) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.NOTIFY_EMAIL, // Your Gmail
+        pass: process.env.GMAIL_APP_PASSWORD, // App password (not Gmail password)
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.NOTIFY_EMAIL,
+      to,
+      subject,
+      text,
+    });
+
+    console.log(`📩 Gmail fallback email sent to ${to}`);
+  } catch (gmailErr: any) {
+    console.error(`🚨 Gmail fallback also failed for ${to}:`, gmailErr.message);
+  }
+}
+
+/**
+ * Helper: Send email with automatic retry + Gmail fallback
+ */
+async function sendEmailWithFallback(mailData: any) {
+  try {
+    // First attempt via SendGrid
+    await sgMail.send(mailData);
+    console.log(`✅ Email sent to ${mailData.to}`);
+  } catch (err: any) {
+    console.error(`❌ SendGrid failed for ${mailData.to}:`, err.message);
+
+    // Retry once after 2 seconds
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await sgMail.send(mailData);
+      console.log(`🔁 Retry success: Email sent to ${mailData.to}`);
+    } catch (retryErr: any) {
+      console.error(`⚠️ Retry failed for ${mailData.to}:`, retryErr.message);
+
+      // Last resort: Gmail plain-text fallback
+      await sendViaGmailFallback(
+        mailData.to,
+        mailData.subject,
+        mailData.text || "Plain text email fallback triggered."
+      );
+    }
+  }
+}
 
 export async function handler(event: any) {
   if (event.httpMethod !== "POST") {
@@ -32,44 +89,60 @@ export async function handler(event: any) {
       return { statusCode: 400, body: `Webhook Error: ${err.message}` };
     }
 
-    // Handle successful payment
     if (stripeEvent.type === "checkout.session.completed") {
       const session = stripeEvent.data.object as Stripe.Checkout.Session;
       const metadata = session.metadata || {};
 
-      // Prepare email content
-      const emailHtml = `
-        <h2>New Custom Sneaker Order</h2>
-        <p><strong>Sneaker:</strong> ${metadata.sneaker}</p>
-        <p><strong>Package:</strong> ${metadata.packageOption}</p>
-        <p><strong>Size:</strong> ${metadata.shoeSize}</p>
-        <p><strong>Lace Color:</strong> ${metadata.laceColor}</p>
-        <p><strong>Description:</strong> ${metadata.description}</p>
-        <p><strong>Images:</strong> ${metadata.images}</p>
-        <p><strong>Customer:</strong> ${metadata.contact_name} (${metadata.contact_email}, ${metadata.contact_phone})</p>
-        <hr />
-        <p>Add a calendar link manually or via Google API next.</p>
-      `;
+      /** --- Build clickable image links --- */
+      const imageLinks = metadata.images
+        ? metadata.images
+            .split(",")
+            .map((img: string) => `<a href="${img.trim()}" target="_blank">${img.trim()}</a>`)
+            .join("<br>")
+        : "No images provided";
 
-      // Send internal notification email
-      await sgMail.send({
-        to: process.env.INTERNAL_ORDER_EMAIL!,
+      /** --- Internal Order Notification Email --- */
+      const internalEmail = internalOrderNotificationEmail(
+        metadata.contact_name,
+        metadata.contact_email,
+        metadata.contact_phone,
+        {
+          sneaker: metadata.sneaker,
+          packageOption: metadata.packageOption,
+          shoeSize: metadata.shoeSize,
+          laceColor: metadata.laceColor,
+          description: metadata.description,
+          images: imageLinks,
+        }
+      );
+
+      await sendEmailWithFallback({
+        to: "kt05.orders@gmail.com",
         from: process.env.SENDGRID_FROM_EMAIL!,
         subject: "New Custom Sneaker Order",
-        html: emailHtml,
+        html: internalEmail.html,
+        text: internalEmail.text,
       });
 
-      // Send confirmation email to customer (with calendar booking link)
-      await sgMail.send({
+      /** --- Customer Confirmation Email --- */
+      const customerEmail = customerConfirmationEmail(
+        metadata.contact_name,
+        process.env.CALENDAR_BOOKING_URL!,
+        {
+          sneaker: metadata.sneaker,
+          packageOption: metadata.packageOption,
+          shoeSize: metadata.shoeSize,
+          laceColor: metadata.laceColor,
+          description: metadata.description,
+        }
+      );
+
+      await sendEmailWithFallback({
         to: metadata.contact_email,
         from: process.env.SENDGRID_FROM_EMAIL!,
         subject: "Your KT05 Custom Sneaker Order Confirmation",
-        html: `
-          <h2>Thank you for your order!</h2>
-          <p>We’ve received your design and will start processing soon.</p>
-          <p>You can book your consultation here: 
-          <a href="${process.env.CALENDAR_BOOKING_URL}" target="_blank">Book Consultation</a></p>
-        `,
+        html: customerEmail.html,
+        text: customerEmail.text,
       });
     }
 
