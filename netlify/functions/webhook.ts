@@ -5,11 +5,6 @@ import nodemailer from "nodemailer";
 import { customerConfirmationEmail } from "../../lib/emails/customerConfirmation";
 import { internalOrderNotificationEmail } from "../../lib/emails/internalOrderNotification";
 
-// 👇 Disable automatic body parsing so Stripe signature works
-export const config = {
-  bodyParser: false,
-};
-
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -73,9 +68,15 @@ const handler: Handler = async (event) => {
   }
 
   const sig = event.headers["stripe-signature"];
-  const rawBody = event.isBase64Encoded
-    ? Buffer.from(event.body!, "base64")
-    : Buffer.from(event.body!, "utf8");
+  const rawBody = event.rawBody;
+
+  if (!rawBody) {
+    console.error("❌ No rawBody found. This is required for Stripe signature verification.");
+    return {
+      statusCode: 400,
+      body: "Webhook Error: No rawBody found.",
+    };
+  }
 
   let stripeEvent;
   try {
