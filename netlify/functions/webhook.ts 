@@ -18,8 +18,8 @@ async function sendViaGmailFallback(to: string, subject: string, text: string) {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.NOTIFY_EMAIL, // Gmail address
-        pass: process.env.GMAIL_APP_PASSWORD, // App password
+        user: process.env.NOTIFY_EMAIL,
+        pass: process.env.GMAIL_APP_PASSWORD,
       },
     });
 
@@ -66,6 +66,7 @@ async function sendEmailWithFallback(mailData: any) {
 }
 
 export async function handler(event: any) {
+  // Must be POST
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -73,29 +74,33 @@ export async function handler(event: any) {
     };
   }
 
+  // STRIPE RAW BODY FIX
+  const sig = event.headers["stripe-signature"];
+  const rawBody = event.isBase64Encoded
+    ? Buffer.from(event.body, "base64")
+    : Buffer.from(event.body, "utf8");
+
+  let stripeEvent;
   try {
-    const sig = event.headers["stripe-signature"];
-    const buf = Buffer.from(event.body, "utf8");
+    stripeEvent = stripe.webhooks.constructEvent(
+      rawBody,
+      sig!,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+    console.log(`🔔 Webhook received: ${stripeEvent.type}`);
+  } catch (err: any) {
+    console.error("❌ Webhook signature verification failed:", err.message);
+    return { statusCode: 400, body: `Webhook Error: ${err.message}` };
+  }
 
-    let stripeEvent;
-    try {
-      stripeEvent = stripe.webhooks.constructEvent(
-        buf,
-        sig!,
-        process.env.STRIPE_WEBHOOK_SECRET!
-      );
-      console.log("Webhook received:", stripeEvent.type);
-    } catch (err: any) {
-      console.error("Webhook signature verification failed:", err.message);
-      return { statusCode: 400, body: `Webhook Error: ${err.message}` };
-    }
-
+  try {
+    // Handle only checkout.session.completed
     if (stripeEvent.type === "checkout.session.completed") {
       const session = stripeEvent.data.object as Stripe.Checkout.Session;
       const metadata = session.metadata || {};
-      console.log("Metadata received:", metadata);
+      console.log("📝 Metadata received:", metadata);
 
-      /** --- Build clickable image links --- */
+      // Build image links if provided
       const imageLinks = metadata.images
         ? metadata.images
             .split(",")
@@ -148,9 +153,10 @@ export async function handler(event: any) {
       });
     }
 
+    // Always return 200 OK to Stripe
     return { statusCode: 200, body: JSON.stringify({ received: true }) };
   } catch (error: any) {
-    console.error("Error handling webhook:", error);
+    console.error("❌ Error handling webhook logic:", error.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Webhook handler failed" }),
