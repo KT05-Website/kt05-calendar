@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 import { customerConfirmationEmail } from "../../lib/emails/customerConfirmation";
 import { internalOrderNotificationEmail } from "../../lib/emails/internalOrderNotification";
 
-// Disable automatic body parsing so we can access raw body
+// 👇 Disable automatic body parsing so Stripe signature works
 export const config = {
   bodyParser: false,
 };
