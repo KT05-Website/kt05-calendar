@@ -5,6 +5,11 @@ import nodemailer from "nodemailer";
 import { customerConfirmationEmail } from "../../lib/emails/customerConfirmation";
 import { internalOrderNotificationEmail } from "../../lib/emails/internalOrderNotification";
 
+// Disable automatic body parsing so we can access raw body
+export const config = {
+  bodyParser: false,
+};
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
