@@ -1,6 +1,4 @@
 export default function SuccessPage() {
-  const framerHomeUrl = process.env.NEXT_PUBLIC_FRAMER_HOME_URL || "/";
-
   return (
     <div
       style={{
@@ -8,34 +6,34 @@ export default function SuccessPage() {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        height: "100vh",
+        minHeight: "100vh",
+        padding: "0 16px",
         backgroundColor: "#000",
         color: "#fff",
         textAlign: "center",
         fontFamily: "Inter, sans-serif",
       }}
     >
-      <h1 style={{ fontSize: "40px", fontWeight: "bold", marginBottom: "20px" }}>
-        Payment Successful!
-      </h1>
-      <p style={{ fontSize: "18px", marginBottom: "30px", maxWidth: "500px" }}>
-        Thank you for securing your spot. We’ve sent you an email with next steps and a link to book your consultation.
-      </p>
-
-      <a
-        href={framerHomeUrl}
+      <h1
         style={{
-          backgroundColor: "#fff",
-          color: "#000",
-          padding: "12px 24px",
-          borderRadius: "6px",
-          textDecoration: "none",
+          fontSize: "clamp(28px, 5vw, 40px)",
           fontWeight: "bold",
-          fontSize: "16px",
+          marginBottom: "16px",
+          lineHeight: 1.2,
         }}
       >
-        Back to Home
-      </a>
+        Payment Successful!
+      </h1>
+      <p
+        style={{
+          fontSize: "clamp(16px, 3.5vw, 18px)",
+          marginBottom: "0",
+          maxWidth: "500px",
+          lineHeight: 1.5,
+        }}
+      >
+        Thank you for securing your spot. We’ve sent you an email with your booking confimation and next steps.
+      </p>
     </div>
   );
 }

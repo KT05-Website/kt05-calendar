@@ -2,30 +2,39 @@ export default function CancelPage() {
   return (
     <div
       style={{
-        fontFamily: "Inter, sans-serif",
-        padding: "40px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        padding: "0 16px",
+        backgroundColor: "#000",
+        color: "#fff",
         textAlign: "center",
+        fontFamily: "Inter, sans-serif",
       }}
     >
-      <h1 style={{ fontSize: "48px", fontWeight: "bold", marginBottom: "20px" }}>
-        Payment Canceled
-      </h1>
-      <p style={{ fontSize: "20px", marginBottom: "30px" }}>
-        No worries — you can return to complete your booking anytime.
-      </p>
-      <a
-        href="/design-your-own"
+      <h1
         style={{
-          padding: "12px 24px",
-          backgroundColor: "#000",
-          color: "#fff",
-          borderRadius: "8px",
-          fontSize: "18px",
-          textDecoration: "none",
+          fontSize: "clamp(28px, 5vw, 40px)",
+          fontWeight: "bold",
+          marginBottom: "16px",
+          lineHeight: 1.2,
         }}
       >
-        Try Again
-      </a>
+        Payment Canceled
+      </h1>
+      <p
+        style={{
+          fontSize: "clamp(16px, 3.5vw, 18px)",
+          marginBottom: "0",
+          maxWidth: "500px",
+          lineHeight: 1.5,
+        }}
+      >
+        No worries — you can return to complete your booking anytime.  
+        Please go back to the main page and try again.
+      </p>
     </div>
   );
 }
