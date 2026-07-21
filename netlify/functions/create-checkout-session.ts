@@ -13,7 +13,6 @@ const corsHeaders = {
 }
 
 export async function handler(event: any) {
-    // Handle the browser's CORS preflight request
     if (event.httpMethod === "OPTIONS") {
         return {
             statusCode: 200,
@@ -22,7 +21,6 @@ export async function handler(event: any) {
         }
     }
 
-    // This function should only accept POST requests
     if (event.httpMethod !== "POST") {
         return {
             statusCode: 405,
@@ -34,7 +32,6 @@ export async function handler(event: any) {
     }
 
     try {
-        // Check that all required Netlify environment variables exist
         if (!process.env.NEXT_PUBLIC_BASE_URL) {
             throw new Error("NEXT_PUBLIC_BASE_URL is not set")
         }
@@ -66,10 +63,11 @@ export async function handler(event: any) {
             description,
             images,
             contact,
+            returnAddress,
             depositType,
         } = payload
 
-        // Confirm a package was selected
+
         if (!packageOption) {
             return {
                 statusCode: 400,
@@ -80,7 +78,6 @@ export async function handler(event: any) {
             }
         }
 
-        // Reject old package names or unexpected values
         if (!allowedPackages.includes(packageOption)) {
             return {
                 statusCode: 400,
@@ -91,7 +88,6 @@ export async function handler(event: any) {
             }
         }
 
-        // Validate the essential order information
         if (!sneaker) {
             return {
                 statusCode: 400,
@@ -122,7 +118,7 @@ export async function handler(event: any) {
             }
         }
 
-        // Select the correct £100 Stripe Price ID
+
         const priceId =
             packageOption === "Signature"
                 ? process.env.STRIPE_PRICE_SIGNATURE
@@ -134,10 +130,11 @@ export async function handler(event: any) {
             )
         }
 
-        // Stripe metadata values must stay within 500 characters
+
         const cleanDescription = (
             typeof description === "string" ? description : ""
         ).slice(0, 500)
+
 
         const imageArray: string[] = Array.isArray(images)
             ? images.filter(
@@ -147,19 +144,56 @@ export async function handler(event: any) {
               )
             : []
 
-        // Save up to ten reference-image URLs while respecting Stripe's limit
+
         const imagesJoined = imageArray
             .slice(0, 10)
             .join(", ")
             .slice(0, 500)
 
-        // Create the Stripe Checkout Session
+
+        // Address formatting for Stripe metadata
+        const addressLine1 = (
+            returnAddress?.line1 ?? ""
+        )
+            .toString()
+            .slice(0, 500)
+
+        const addressLine2 = (
+            returnAddress?.line2 ?? ""
+        )
+            .toString()
+            .slice(0, 500)
+
+        const addressCity = (
+            returnAddress?.city ?? ""
+        )
+            .toString()
+            .slice(0, 500)
+
+        const addressCounty = (
+            returnAddress?.county ?? ""
+        )
+            .toString()
+            .slice(0, 500)
+
+        const addressPostcode = (
+            returnAddress?.postcode ?? ""
+        )
+            .toString()
+            .slice(0, 500)
+
+        const addressCountry = (
+            returnAddress?.country ?? ""
+        )
+            .toString()
+            .slice(0, 500)
+
+
         const session = await stripe.checkout.sessions.create({
             mode: "payment",
 
             payment_method_types: ["card"],
 
-            // Uses the stored £100 Stripe product for the selected package
             line_items: [
                 {
                     price: priceId,
@@ -170,7 +204,6 @@ export async function handler(event: any) {
             success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
             cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/cancel`,
 
-            // Prefill the customer's email address in Stripe Checkout
             customer_email: contact.email,
 
             customer_creation: "if_required",
@@ -178,6 +211,7 @@ export async function handler(event: any) {
             phone_number_collection: {
                 enabled: true,
             },
+
 
             metadata: {
                 depositType: (
@@ -208,6 +242,7 @@ export async function handler(event: any) {
 
                 images: imagesJoined,
 
+
                 contact_name: (contact?.name ?? "")
                     .toString()
                     .slice(0, 500),
@@ -219,14 +254,25 @@ export async function handler(event: any) {
                 contact_phone: (contact?.phone ?? "")
                     .toString()
                     .slice(0, 500),
+
+
+                // NEW RETURN ADDRESS INFORMATION
+                address_line1: addressLine1,
+                address_line2: addressLine2,
+                address_city: addressCity,
+                address_county: addressCounty,
+                address_postcode: addressPostcode,
+                address_country: addressCountry,
             },
         })
+
 
         if (!session.url) {
             throw new Error(
                 "Stripe Checkout Session did not return a URL"
             )
         }
+
 
         return {
             statusCode: 200,
@@ -235,6 +281,7 @@ export async function handler(event: any) {
                 url: session.url,
             }),
         }
+
     } catch (error: any) {
         console.error(
             "❌ Stripe Checkout Error:",
