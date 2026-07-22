@@ -152,41 +152,41 @@ export async function handler(event: any) {
 
 
         // Address formatting for Stripe metadata
-        const addressLine1 = (
+        returnAddress_line1: (
             returnAddress?.line1 ?? ""
         )
             .toString()
-            .slice(0, 500)
+            .slice(0, 500),
 
-        const addressLine2 = (
+        returnAddress_line2: (
             returnAddress?.line2 ?? ""
         )
             .toString()
-            .slice(0, 500)
+            .slice(0, 500),
 
-        const addressCity = (
+        returnAddress_city: (
             returnAddress?.city ?? ""
         )
             .toString()
-            .slice(0, 500)
+            .slice(0, 500),
 
-        const addressCounty = (
+        returnAddress_county: (
             returnAddress?.county ?? ""
         )
             .toString()
-            .slice(0, 500)
+            .slice(0, 500),
 
-        const addressPostcode = (
+        returnAddress_postcode: (
             returnAddress?.postcode ?? ""
         )
             .toString()
-            .slice(0, 500)
+            .slice(0, 500),
 
-        const addressCountry = (
+        returnAddress_country: (
             returnAddress?.country ?? ""
         )
             .toString()
-            .slice(0, 500)
+            .slice(0, 500),
 
 
         const session = await stripe.checkout.sessions.create({
