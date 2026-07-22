@@ -121,41 +121,41 @@ export async function handler(event: any) {
 
 
 
-        returnAddress_line1: (
+        const addressLine1 = (
             returnAddress?.line1 ?? ""
         )
             .toString()
-            .slice(0, 500),
+            .slice(0, 500)
 
-        returnAddress_line2: (
+        const addressLine2 = (
             returnAddress?.line2 ?? ""
         )
             .toString()
-            .slice(0, 500),
+            .slice(0, 500)
 
-        returnAddress_city: (
+        const addressCity = (
             returnAddress?.city ?? ""
         )
             .toString()
-            .slice(0, 500),
+            .slice(0, 500)
 
-        returnAddress_county: (
+        const addressCounty = (
             returnAddress?.county ?? ""
         )
             .toString()
-            .slice(0, 500),
+            .slice(0, 500)
 
-        returnAddress_postcode: (
+        const addressPostcode = (
             returnAddress?.postcode ?? ""
         )
             .toString()
-            .slice(0, 500),
+            .slice(0, 500)
 
-        returnAddress_country: (
+        const addressCountry = (
             returnAddress?.country ?? ""
         )
             .toString()
-            .slice(0, 500),
+            .slice(0, 500)
 
 
 
